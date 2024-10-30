@@ -2,12 +2,25 @@
 	<div class="app">
 		<h1 :style="{ color: draggedMember ? 'red' : 'inherit' }">Team Management</h1>
 		<div class="teams">
-			<div v-for="team in teams" :key="team.name" class="team" @dragover.prevent @drop="onDrop($event, team)"
-				@touchmove="onTouchMove($event)" @touchend="onTouchEnd(team)">
+			<div
+				v-for="team in teams"
+				:key="team.name"
+				class="team"
+				@dragover.prevent
+				@drop="onDrop($event, team)"
+				@touchmove="onTouchMove($event)"
+				@touchend="onTouchEnd(team)"
+			>
 				<h2>{{ team.name }}</h2>
 				<ul>
-					<li v-for="(member, index) in team.members" :key="member" draggable="true"
-						@dragstart="onDragStart($event, team, index)" @touchstart="onTouchStart($event, team, index)">
+					<li
+						v-for="(member, index) in team.members"
+						:key="member"
+						:class="{ holding: draggedMember?.team === team && draggedMember?.index === index }"
+						draggable="true"
+						@dragstart="onDragStart($event, team, index)"
+						@touchstart="onTouchStart($event, team, index)"
+					>
 						{{ member }}
 					</li>
 				</ul>
@@ -27,7 +40,7 @@ export default {
 				{ name: "Team C", members: ["Eve", "Frank"] },
 			],
 			draggedMember: null,
-			touchTargetTeam: null, // Target team for touch dragging
+			touchTargetTeam: null,
 		};
 	},
 	methods: {
@@ -36,9 +49,9 @@ export default {
 		},
 		onTouchStart(event, team, index) {
 			this.draggedMember = { team, index };
+			event.target.classList.add("holding");
 		},
 		onTouchMove(event) {
-			// Identify which team is under the touch position
 			const touch = event.touches[0];
 			const element = document.elementFromPoint(touch.clientX, touch.clientY);
 			const teamElement = element.closest(".team");
@@ -65,6 +78,8 @@ export default {
 			this.resetDrag();
 		},
 		resetDrag() {
+			const holdingElement = document.querySelector(".holding");
+			if (holdingElement) holdingElement.classList.remove("holding");
 			this.draggedMember = null;
 			this.touchTargetTeam = null;
 		},
@@ -108,6 +123,12 @@ export default {
 					border-radius: 5px;
 					text-align: center;
 					cursor: grab;
+					transition: transform 0.2s ease, opacity 0.2s ease;
+
+					&.holding {
+						opacity: 0.7;
+						transform: scale(1.05);
+					}
 
 					&:active {
 						cursor: grabbing;
