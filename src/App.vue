@@ -19,6 +19,7 @@
 						:class="{ holding: isHolding(team, index) }"
 						draggable="true"
 						@dragstart="startDrag(team, index)"
+						@dragend="clearDragState"
 						@touchstart="startDrag(team, index)"
 					>
 						{{ member }}
@@ -59,6 +60,8 @@ export default {
 			if (teamElement) {
 				const teamName = teamElement.querySelector("h2").innerText;
 				this.targetTeam = this.teams.find((team) => team.name === teamName) || null;
+			} else {
+				this.targetTeam = null; // Reset target if not over a team
 			}
 		},
 		finalizeTouchMove() {
