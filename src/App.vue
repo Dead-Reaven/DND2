@@ -1,6 +1,6 @@
 <template>
   <div class="app">
-    <h1>Team Management</h1>
+    <h1 :style="{color: draggedMember ? 'red' : 'inherit'}">Team Management</h1>
     <div class="teams">
       <div
         v-for="team in teams"
