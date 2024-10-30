@@ -7,10 +7,9 @@
 				:key="team.name"
 				class="team"
 				@dragover.prevent
-				@drop="onDrop($event, team)"
+				@drop="handleDrop(team)"
 				@touchmove="onTouchMove"
-				@touchend="onTouchEnd"
-				@touchcancel="resetDrag"
+				@touchend="finalizeTouchMove"
 			>
 				<h2>{{ team.name }}</h2>
 				<ul>
@@ -19,8 +18,8 @@
 						:key="`${team.name}-${index}`"
 						:class="{ holding: isHolding(team, index) }"
 						draggable="true"
-						@dragstart="onDragStart($event, team, index)"
-						@touchstart="onTouchStart($event, team, index)"
+						@dragstart="startDrag(team, index)"
+						@touchstart="startDrag(team, index)"
 					>
 						{{ member }}
 					</li>
@@ -41,46 +40,40 @@ export default {
 				{ name: "Team C", members: ["Eve", "Frank"] },
 			],
 			draggedMember: null,
-			touchTargetTeam: null,
+			targetTeam: null,
 		};
 	},
 	methods: {
 		isHolding(team, index) {
-			return (
-				this.draggedMember?.team === team &&
-				this.draggedMember?.index === index &&
-				this.draggedMember?.isHolding
-			);
+			const { draggedMember } = this;
+			return draggedMember && draggedMember.team === team && draggedMember.index === index;
 		},
-		onDragStart(event, team, index) {
-			this.draggedMember = { team, index, isHolding: true };
-		},
-		onTouchStart(event, team, index) {
-			this.draggedMember = { team, index, isHolding: true };
+		startDrag(team, index) {
+			this.draggedMember = { team, index };
 		},
 		onTouchMove(event) {
 			const touch = event.touches[0];
-			const element = document.elementFromPoint(touch.clientX, touch.clientY);
-			const teamElement = element?.closest(".team");
+			const target = document.elementFromPoint(touch.clientX, touch.clientY);
+			const teamElement = target?.closest(".team");
 
 			if (teamElement) {
-				const teamName = teamElement.querySelector("h2")?.innerText;
-				this.touchTargetTeam = this.teams.find((team) => team.name === teamName) || null;
+				const teamName = teamElement.querySelector("h2").innerText;
+				this.targetTeam = this.teams.find((team) => team.name === teamName) || null;
 			}
 		},
-		onTouchEnd() {
-			this.moveMember();
-			this.resetDrag();
+		finalizeTouchMove() {
+			this.transferMember(this.targetTeam);
+			this.clearDragState();
 		},
-		onDrop(event, targetTeam) {
-			this.moveMember(targetTeam);
-			this.resetDrag();
+		handleDrop(targetTeam) {
+			this.transferMember(targetTeam);
+			this.clearDragState();
 		},
-		moveMember(targetTeam = this.touchTargetTeam) {
+		transferMember(targetTeam) {
 			const { team: sourceTeam, index } = this.draggedMember || {};
 			if (sourceTeam && targetTeam && sourceTeam !== targetTeam) {
 				const movedMember = sourceTeam.members[index];
-				// Creating new arrays to ensure reactivity
+
 				this.teams = this.teams.map((team) => {
 					if (team === sourceTeam) {
 						return { ...team, members: team.members.filter((_, i) => i !== index) };
@@ -91,9 +84,9 @@ export default {
 				});
 			}
 		},
-		resetDrag() {
+		clearDragState() {
 			this.draggedMember = null;
-			this.touchTargetTeam = null;
+			this.targetTeam = null;
 		},
 	},
 };
